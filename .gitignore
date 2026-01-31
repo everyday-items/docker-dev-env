@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+
+.claude/
+
+# 密钥目录
+*/secrets/
+
+# 数据目录
+redis/data/
+mysql/data/
+mongodb/data/
+etcd/data/
+jaeger/data/
+prometheus/data/
+grafana/data/
+kafka/data/
+dtm/data/
+registry/data/
+gitlab/data/
+gitlab/backups/
+minio/data/
+elasticsearch/data/
+nginx/logs/
+nginx/ssl/
+rabbitmq/data/
+redis-cluster/data/
+mysql-cluster/data/
+kafka-cluster/data/
+mongodb-cluster/data/
+clickhouse/data/
+clickhouse/logs/
+clickhouse-cluster/data/
+clickhouse-cluster/logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 日志
+*.log

@@ -1,0 +1,162 @@
+# ClickHouse Cluster - 2 分片 × 2 副本（4 节点）
+services:
+  # ClickHouse Keeper（协调服务，替代 ZooKeeper）
+  clickhouse-keeper-1:
+    image: clickhouse/clickhouse-keeper:24-alpine
+    container_name: clickhouse-keeper-1
+    ports:
+      - "9181:9181"
+    volumes:
+      - ./config/keeper-1.xml:/etc/clickhouse-keeper/keeper_config.xml:ro
+      - ./data/keeper-1:/var/lib/clickhouse-keeper
+    networks:
+      - clickhouse-cluster-net
+    restart: unless-stopped
+
+  clickhouse-keeper-2:
+    image: clickhouse/clickhouse-keeper:24-alpine
+    container_name: clickhouse-keeper-2
+    ports:
+      - "9182:9181"
+    volumes:
+      - ./config/keeper-2.xml:/etc/clickhouse-keeper/keeper_config.xml:ro
+      - ./data/keeper-2:/var/lib/clickhouse-keeper
+    networks:
+      - clickhouse-cluster-net
+    restart: unless-stopped
+
+  clickhouse-keeper-3:
+    image: clickhouse/clickhouse-keeper:24-alpine
+    container_name: clickhouse-keeper-3
+    ports:
+      - "9183:9181"
+    volumes:
+      - ./config/keeper-3.xml:/etc/clickhouse-keeper/keeper_config.xml:ro
+      - ./data/keeper-3:/var/lib/clickhouse-keeper
+    networks:
+      - clickhouse-cluster-net
+    restart: unless-stopped
+
+  # Shard 1, Replica 1
+  clickhouse-s1r1:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: clickhouse-s1r1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse123
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/s1r1:/var/lib/clickhouse
+      - ./logs/s1r1:/var/log/clickhouse-server
+      - ./config/clickhouse-s1r1.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+      - ./config/macros-s1r1.xml:/etc/clickhouse-server/config.d/macros.xml:ro
+      - ./config/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    depends_on:
+      - clickhouse-keeper-1
+      - clickhouse-keeper-2
+      - clickhouse-keeper-3
+    networks:
+      - clickhouse-cluster-net
+    restart: unless-stopped
+
+  # Shard 1, Replica 2
+  clickhouse-s1r2:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: clickhouse-s1r2
+    ports:
+      - "8124:8123"
+      - "9001:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse123
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/s1r2:/var/lib/clickhouse
+      - ./logs/s1r2:/var/log/clickhouse-server
+      - ./config/clickhouse-s1r2.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+      - ./config/macros-s1r2.xml:/etc/clickhouse-server/config.d/macros.xml:ro
+      - ./config/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    depends_on:
+      - clickhouse-keeper-1
+      - clickhouse-keeper-2
+      - clickhouse-keeper-3
+    networks:
+      - clickhouse-cluster-net
+    restart: unless-stopped
+
+  # Shard 2, Replica 1
+  clickhouse-s2r1:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: clickhouse-s2r1
+    ports:
+      - "8125:8123"
+      - "9002:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse123
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/s2r1:/var/lib/clickhouse
+      - ./logs/s2r1:/var/log/clickhouse-server
+      - ./config/clickhouse-s2r1.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+      - ./config/macros-s2r1.xml:/etc/clickhouse-server/config.d/macros.xml:ro
+      - ./config/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    depends_on:
+      - clickhouse-keeper-1
+      - clickhouse-keeper-2
+      - clickhouse-keeper-3
+    networks:
+      - clickhouse-cluster-net
+    restart: unless-stopped
+
+  # Shard 2, Replica 2
+  clickhouse-s2r2:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: clickhouse-s2r2
+    ports:
+      - "8126:8123"
+      - "9003:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse123
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/s2r2:/var/lib/clickhouse
+      - ./logs/s2r2:/var/log/clickhouse-server
+      - ./config/clickhouse-s2r2.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+      - ./config/macros-s2r2.xml:/etc/clickhouse-server/config.d/macros.xml:ro
+      - ./config/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    depends_on:
+      - clickhouse-keeper-1
+      - clickhouse-keeper-2
+      - clickhouse-keeper-3
+    networks:
+      - clickhouse-cluster-net
+    restart: unless-stopped
+
+networks:
+  clickhouse-cluster-net:
+    driver: bridge

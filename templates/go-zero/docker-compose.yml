@@ -1,0 +1,85 @@
+# Go-Zero 本地开发环境
+# 用法: docker-compose up -d
+
+services:
+  # API 服务
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: go-zero-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - go-mod:/go/pkg/mod
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - go-zero-net
+    restart: unless-stopped
+
+  # RPC 服务（如需要）
+  # rpc:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   container_name: go-zero-rpc
+  #   ports:
+  #     - "9080:9080"
+  #   volumes:
+  #     - .:/app
+  #     - go-mod:/go/pkg/mod
+  #   command: ["air", "-c", ".air.rpc.toml"]
+  #   networks:
+  #     - go-zero-net
+
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: go-zero-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: app
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - go-zero-net
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: go-zero-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - go-zero-net
+
+  # etcd
+  etcd:
+    image: bitnami/etcd:3.5
+    container_name: go-zero-etcd
+    ports:
+      - "2379:2379"
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+    networks:
+      - go-zero-net
+
+volumes:
+  go-mod:
+  mysql-data:
+  redis-data:
+
+networks:
+  go-zero-net:
+    driver: bridge

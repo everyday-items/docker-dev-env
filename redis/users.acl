@@ -1,0 +1,12 @@
+# Redis ACL 配置
+# 格式: user <username> <rules>
+
+# 禁用 default 用户
+user default off
+
+# 应用用户 - 用于应用程序连接
+# 权限: 所有 key (~*), 所有 channel (&*), 所有命令 (+@all)
+user app on >redis123 ~* &* +@all
+
+# 管理员用户 - 用于运维管理
+user admin on >admin123 ~* &* +@all

@@ -1,0 +1,91 @@
+# Go 开发环境
+services:
+  go-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: go-dev:1.25
+    container_name: go-dev
+    working_dir: /app
+    environment:
+      GO111MODULE: "on"
+      GOPROXY: https://goproxy.cn,direct
+      TZ: Asia/Shanghai
+      # 通过容器名访问其他服务（dev-net 网络内）
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      MYSQL_HOST: ${MYSQL_HOST:-mysql}
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root123
+      MONGODB_HOST: ${MONGODB_HOST:-mongodb}
+      MONGODB_PORT: 27017
+      ETCD_HOST: ${ETCD_HOST:-etcd}
+      ETCD_PORT: 2379
+      KAFKA_HOST: ${KAFKA_HOST:-kafka}
+      KAFKA_PORT: 9092
+      JAEGER_HOST: ${JAEGER_HOST:-jaeger}
+      JAEGER_PORT: 14268
+    volumes:
+      # 挂载项目目录（修改为你的项目路径）
+      - ${PROJECT_PATH:-../..}:/app
+      # 持久化 Go modules 缓存
+      - go-mod-cache:/go/pkg/mod
+      # 持久化 Go build 缓存
+      - go-build-cache:/root/.cache/go-build
+    ports:
+      # API 端口（根据需要修改，避免与 Prometheus 9090 冲突）
+      - "${API_PORT:-8080}:8080"
+      - "${DEBUG_PORT:-8888}:8888"
+      - "${METRICS_PORT:-9091}:9091"
+    # 保持容器运行
+    stdin_open: true
+    tty: true
+    networks:
+      - dev-net
+    restart: unless-stopped
+    # 兼容：通过宿主机访问未加入 dev-net 的服务
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 带热重载的开发容器
+  go-dev-air:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: go-dev:1.25
+    container_name: go-dev-air
+    working_dir: /app
+    environment:
+      GO111MODULE: "on"
+      GOPROXY: https://goproxy.cn,direct
+      TZ: Asia/Shanghai
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      MYSQL_HOST: ${MYSQL_HOST:-mysql}
+      MONGODB_HOST: ${MONGODB_HOST:-mongodb}
+      ETCD_HOST: ${ETCD_HOST:-etcd}
+      KAFKA_HOST: ${KAFKA_HOST:-kafka}
+    volumes:
+      - ${PROJECT_PATH:-../..}:/app
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    ports:
+      - "${API_PORT:-8080}:8080"
+      - "${DEBUG_PORT:-8888}:8888"
+    # 使用 air 热重载
+    command: air -c .air.toml
+    networks:
+      - dev-net
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    profiles:
+      - air
+
+networks:
+  dev-net:
+    external: true
+
+volumes:
+  go-mod-cache:
+  go-build-cache:

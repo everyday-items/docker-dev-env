@@ -1,0 +1,25 @@
+# Go-Zero 生产构建
+# 用法: docker-compose -f docker-compose.prod.yml build
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${REGISTRY:-localhost:5000}/go-zero-api:${TAG:-latest}
+    container_name: go-zero-api
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'

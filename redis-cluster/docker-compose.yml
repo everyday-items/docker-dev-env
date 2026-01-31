@@ -1,0 +1,89 @@
+# Redis Cluster - 6 节点（3 主 + 3 从）
+services:
+  redis-node-1:
+    image: redis:7-alpine
+    container_name: redis-node-1
+    ports:
+      - "6371:6379"
+      - "16371:16379"
+    volumes:
+      - ./data/node-1:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./users.acl:/usr/local/etc/redis/users.acl:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --port 6379 --cluster-announce-ip ${HOST_IP:-127.0.0.1} --cluster-announce-port 6371 --cluster-announce-bus-port 16371
+    networks:
+      - redis-cluster-net
+
+  redis-node-2:
+    image: redis:7-alpine
+    container_name: redis-node-2
+    ports:
+      - "6372:6379"
+      - "16372:16379"
+    volumes:
+      - ./data/node-2:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./users.acl:/usr/local/etc/redis/users.acl:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --port 6379 --cluster-announce-ip ${HOST_IP:-127.0.0.1} --cluster-announce-port 6372 --cluster-announce-bus-port 16372
+    networks:
+      - redis-cluster-net
+
+  redis-node-3:
+    image: redis:7-alpine
+    container_name: redis-node-3
+    ports:
+      - "6373:6379"
+      - "16373:16379"
+    volumes:
+      - ./data/node-3:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./users.acl:/usr/local/etc/redis/users.acl:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --port 6379 --cluster-announce-ip ${HOST_IP:-127.0.0.1} --cluster-announce-port 6373 --cluster-announce-bus-port 16373
+    networks:
+      - redis-cluster-net
+
+  redis-node-4:
+    image: redis:7-alpine
+    container_name: redis-node-4
+    ports:
+      - "6374:6379"
+      - "16374:16379"
+    volumes:
+      - ./data/node-4:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./users.acl:/usr/local/etc/redis/users.acl:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --port 6379 --cluster-announce-ip ${HOST_IP:-127.0.0.1} --cluster-announce-port 6374 --cluster-announce-bus-port 16374
+    networks:
+      - redis-cluster-net
+
+  redis-node-5:
+    image: redis:7-alpine
+    container_name: redis-node-5
+    ports:
+      - "6375:6379"
+      - "16375:16379"
+    volumes:
+      - ./data/node-5:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./users.acl:/usr/local/etc/redis/users.acl:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --port 6379 --cluster-announce-ip ${HOST_IP:-127.0.0.1} --cluster-announce-port 6375 --cluster-announce-bus-port 16375
+    networks:
+      - redis-cluster-net
+
+  redis-node-6:
+    image: redis:7-alpine
+    container_name: redis-node-6
+    ports:
+      - "6376:6379"
+      - "16376:16379"
+    volumes:
+      - ./data/node-6:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./users.acl:/usr/local/etc/redis/users.acl:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --port 6379 --cluster-announce-ip ${HOST_IP:-127.0.0.1} --cluster-announce-port 6376 --cluster-announce-bus-port 16376
+    networks:
+      - redis-cluster-net
+
+networks:
+  redis-cluster-net:
+    driver: bridge

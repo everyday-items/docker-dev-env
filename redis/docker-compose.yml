@@ -1,0 +1,27 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ./data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./users.acl:/usr/local/etc/redis/users.acl:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--user", "app", "--pass", "redis123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - dev-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  dev-net:
+    external: true

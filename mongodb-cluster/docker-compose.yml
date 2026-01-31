@@ -1,0 +1,94 @@
+# MongoDB Replica Set - 3 节点（1 Primary + 2 Secondary）
+services:
+  mongo-1:
+    image: mongo:7
+    container_name: mongo-1
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/mongo-1:/data/db
+      - ./scripts:/scripts:ro
+      - ./secrets:/run/secrets:ro
+    networks:
+      - mongo-cluster-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongo-2:
+    image: mongo:7
+    container_name: mongo-2
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/mongo-2:/data/db
+      - ./secrets:/run/secrets:ro
+    networks:
+      - mongo-cluster-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongo-3:
+    image: mongo:7
+    container_name: mongo-3
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/mongo-3:/data/db
+      - ./secrets:/run/secrets:ro
+    networks:
+      - mongo-cluster-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Mongo Express（可选，Web 管理界面）
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD_FILE: /run/secrets/mongo_root_password
+      ME_CONFIG_MONGODB_URL: mongodb://root:root123@mongo-1:27017,mongo-2:27017,mongo-3:27017/?replicaSet=rs0
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    volumes:
+      - ./secrets:/run/secrets:ro
+    depends_on:
+      - mongo-1
+      - mongo-2
+      - mongo-3
+    networks:
+      - mongo-cluster-net
+    restart: unless-stopped
+
+networks:
+  mongo-cluster-net:
+    driver: bridge

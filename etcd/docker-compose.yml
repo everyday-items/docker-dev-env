@@ -1,0 +1,34 @@
+services:
+  etcd:
+    image: bitnami/etcd:3.5
+    container_name: etcd
+    ports:
+      - "${ETCD_CLIENT_PORT:-2379}:2379"
+      - "${ETCD_PEER_PORT:-2380}:2380"
+    environment:
+      # 启用认证
+      ALLOW_NONE_AUTHENTICATION: "no"
+      ETCD_ROOT_PASSWORD: ${ETCD_ROOT_PASSWORD:-etcd123}
+      ETCD_ADVERTISE_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_DATA_DIR: /bitnami/etcd/data
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data:/bitnami/etcd/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "etcdctl", "--user", "root:${ETCD_ROOT_PASSWORD:-etcd123}", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - dev-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  dev-net:
+    external: true

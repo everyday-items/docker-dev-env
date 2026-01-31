@@ -1,0 +1,31 @@
+# Kind 集群配置 - 单节点（轻量版）
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: dev-cluster
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # HTTP
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      # HTTPS
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+      # NodePort 范围
+      - containerPort: 30000
+        hostPort: 30000
+        protocol: TCP
+      - containerPort: 30001
+        hostPort: 30001
+        protocol: TCP
+      - containerPort: 30002
+        hostPort: 30002
+        protocol: TCP

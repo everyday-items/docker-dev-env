@@ -1,0 +1,56 @@
+# Gin 本地开发环境
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: gin-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - go-mod:/go/pkg/mod
+    environment:
+      - GIN_MODE=debug
+      - TZ=Asia/Shanghai
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - gin-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: gin-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: app
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - gin-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: gin-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - gin-net
+
+volumes:
+  go-mod:
+  mysql-data:
+  redis-data:
+
+networks:
+  gin-net:
+    driver: bridge

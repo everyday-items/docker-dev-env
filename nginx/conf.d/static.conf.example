@@ -1,0 +1,34 @@
+# 静态文件服务示例
+# 使用方法: 去掉 .example 后缀启用
+
+server {
+    listen       80;
+    server_name  static.local;
+
+    root /usr/share/nginx/html;
+
+    # 静态文件缓存
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|svg)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # HTML 不缓存
+    location ~* \.(html|htm)$ {
+        expires -1;
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+
+    # 单页应用 (SPA)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 禁止访问隐藏文件
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}

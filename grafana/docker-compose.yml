@@ -1,0 +1,31 @@
+services:
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      # 使用文件方式读取密码
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/admin_password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data:/var/lib/grafana
+      - ./secrets:/run/secrets:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - dev-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  dev-net:
+    external: true

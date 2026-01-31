@@ -1,0 +1,49 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:17.6.0-ce.0
+    container_name: gitlab
+    hostname: gitlab.local
+    ports:
+      - "${GITLAB_HTTP_PORT:-8929}:80"
+      - "${GITLAB_HTTPS_PORT:-8930}:443"
+      - "${GITLAB_SSH_PORT:-2224}:22"
+    environment:
+      TZ: Asia/Shanghai
+      # 设置初始 root 密码
+      GITLAB_ROOT_PASSWORD_FILE: /run/secrets/root_password
+      GITLAB_OMNIBUS_CONFIG: |
+        # 外部访问地址
+        external_url 'http://localhost:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+
+        # 镜像仓库
+        registry_external_url 'http://localhost:5050'
+        gitlab_rails['registry_enabled'] = true
+
+        # 减少内存占用
+        puma['worker_processes'] = 2
+        sidekiq['max_concurrency'] = 10
+        prometheus_monitoring['enable'] = false
+        grafana['enable'] = false
+        alertmanager['enable'] = false
+
+        # 禁用不需要的功能（可选，进一步减少资源）
+        # gitlab_kas['enable'] = false
+        # sentinel['enable'] = false
+    volumes:
+      - ./data/config:/etc/gitlab
+      - ./data/logs:/var/log/gitlab
+      - ./data/data:/var/opt/gitlab
+      - ./secrets:/run/secrets:ro
+    shm_size: '256m'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/-/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+    deploy:
+      resources:
+        limits:
+          memory: 6G

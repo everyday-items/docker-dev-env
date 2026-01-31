@@ -1,0 +1,15 @@
+[mysqld]
+# 主节点配置
+server-id=1
+log-bin=mysql-bin
+binlog-format=ROW
+sync-binlog=1
+binlog-do-db=app
+
+# 字符集
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+
+# 性能
+innodb_flush_log_at_trx_commit=1
+max_connections=200

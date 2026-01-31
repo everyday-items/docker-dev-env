@@ -1,0 +1,31 @@
+services:
+  dtm:
+    image: yedf/dtm:1.18.1
+    container_name: dtm
+    ports:
+      - "${DTM_HTTP_PORT:-36789}:36789"
+      - "${DTM_GRPC_PORT:-36790}:36790"
+    environment:
+      STORE_DRIVER: ${DTM_STORE_DRIVER:-mysql}
+      STORE_HOST: ${DTM_STORE_HOST:-host.docker.internal}
+      STORE_PORT: ${DTM_STORE_PORT:-3306}
+      STORE_USER: ${DTM_STORE_USER:-root}
+      STORE_PASSWORD: ${DTM_STORE_PASSWORD:-root123}
+      STORE_DB: ${DTM_STORE_DB:-dtm}
+      TZ: Asia/Shanghai
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:36789/api/dtmsvr/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - dev-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  dev-net:
+    external: true

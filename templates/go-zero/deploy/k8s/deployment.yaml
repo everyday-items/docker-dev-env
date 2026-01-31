@@ -1,0 +1,112 @@
+# Go-Zero K8s 部署配置
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-zero-api
+  labels:
+    app: go-zero-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: go-zero-api
+  template:
+    metadata:
+      labels:
+        app: go-zero-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9081"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: localhost:5000/go-zero-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9081
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            # 从 ConfigMap 读取配置
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: go-zero-config
+                  key: mysql_host
+            # 从 Secret 读取敏感信息
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: go-zero-secret
+                  key: mysql_password
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: config
+              mountPath: /app/etc
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: go-zero-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-zero-api
+  labels:
+    app: go-zero-api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+    - name: metrics
+      port: 9081
+      targetPort: 9081
+  selector:
+    app: go-zero-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: go-zero-api
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: go-zero-api
+                port:
+                  number: 80

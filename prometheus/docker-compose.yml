@@ -1,0 +1,30 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - dev-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  dev-net:
+    external: true
